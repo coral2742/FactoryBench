@@ -67,8 +67,9 @@ def create_error_distribution_chart(runs: List[Dict[str, Any]], output_path: Pat
     
     # Extract error metrics
     mean_errors = [r.get("aggregate", {}).get("mean_abs_err_mean", 0) for r in runs]
-    min_errors = [r.get("aggregate", {}).get("mean_abs_err_min", 0) for r in runs]
-    max_errors = [r.get("aggregate", {}).get("mean_abs_err_max", 0) for r in runs]
+    # Correct metric keys: aggregator outputs min_abs_err_mean / max_abs_err_mean
+    min_errors = [r.get("aggregate", {}).get("min_abs_err_mean", 0) for r in runs]
+    max_errors = [r.get("aggregate", {}).get("max_abs_err_mean", 0) for r in runs]
     labels = [r.get("run_id", f"Run {i+1}")[:8] for i, r in enumerate(runs)]
     
     fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
@@ -263,8 +264,8 @@ def create_error_breakdown_chart(runs: List[Dict[str, Any]], output_path: Path) 
         return _create_empty_chart("No data available")
     
     mean_errors = [r.get("aggregate", {}).get("mean_abs_err_mean", 0) for r in runs]
-    min_errors = [r.get("aggregate", {}).get("mean_abs_err_min", 0) for r in runs]
-    max_errors = [r.get("aggregate", {}).get("mean_abs_err_max", 0) for r in runs]
+    min_errors = [r.get("aggregate", {}).get("min_abs_err_mean", 0) for r in runs]
+    max_errors = [r.get("aggregate", {}).get("max_abs_err_mean", 0) for r in runs]
     
     fig, ax = plt.subplots(figsize=(10, 6), dpi=300)
     
@@ -373,8 +374,8 @@ def generate_all_charts(runs_dir: Path, output_dir: Path, model_filters: list = 
             if model_filters and run_data.get("model") not in model_filters:
                 continue
             if dataset_filters:
-                dataset_source = run_data.get("dataset", {}).get("source")
-                if dataset_source not in dataset_filters:
+                dataset_id = run_data.get("dataset", {}).get("dataset_id")
+                if dataset_id not in dataset_filters:
                     continue
                     
             runs.append(run_data)

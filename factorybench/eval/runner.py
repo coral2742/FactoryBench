@@ -30,6 +30,25 @@ def run_telemetry_literacy(
     started = datetime.now(timezone.utc)
     results: List[Dict[str, Any]] = []
     scores: List[Dict[str, Any]] = []
+    # Prepare run skeleton with status for potential future incremental updates
+    run_id = started.strftime("tl-%Y%m%dT%H%M%S")
+    run: Dict[str, Any] = {
+        "run_id": run_id,
+        "stage": "telemetry_literacy",
+        "model": model_name,
+        "started_at": started.isoformat(),
+        "dataset": dataset_meta,
+        "results": [],
+        "aggregate": {},
+        "version": "0.1.0",
+        "status": "running",
+    }
+
+    # Persist initial running state (enables future streaming/progress)
+    RUN_DIR.mkdir(parents=True, exist_ok=True)
+    out_path = Path(RUN_DIR) / f"{run_id}.json"
+    with out_path.open("w", encoding="utf-8") as f:
+        json.dump(run, f, indent=2)
 
     for s in samples:
         pred_text = adapter.generate(build_prompt(s))
@@ -50,21 +69,10 @@ def run_telemetry_literacy(
         results.append(result_item)
 
     agg = aggregate(scores)
-    run = {
-        "run_id": started.strftime("tl-%Y%m%dT%H%M%S"),
-        "stage": "telemetry_literacy",
-        "model": model_name,
-        "started_at": started.isoformat(),
-        "ended_at": datetime.now(timezone.utc).isoformat(),
-        "dataset": dataset_meta,
-        "aggregate": agg,
-        "results": results,
-        "version": "0.1.0",
-    }
-
-    # persist
-    RUN_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = Path(RUN_DIR) / f"{run['run_id']}.json"
+    run["aggregate"] = agg
+    run["results"] = results
+    run["ended_at"] = datetime.now(timezone.utc).isoformat()
+    run["status"] = "completed"
     with out_path.open("w", encoding="utf-8") as f:
         json.dump(run, f, indent=2)
     return run

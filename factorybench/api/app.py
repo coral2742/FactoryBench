@@ -73,6 +73,7 @@ def list_runs(
                     "run_id": data.get("run_id"),
                     "stage": data.get("stage"),
                     "model": data.get("model"),
+                    "status": data.get("status", "completed"),
                     "aggregate": data.get("aggregate", {}),
                     "dataset": data.get("dataset", {}),
                 }

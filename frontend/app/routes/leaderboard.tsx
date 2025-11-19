@@ -93,7 +93,14 @@ export default function Leaderboard() {
       const res = await fetch(`${apiBase}/runs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stage: "telemetry_literacy", model: "mock", limit: 5 })
+        body: JSON.stringify({ 
+          stage: "telemetry_literacy", 
+          model: "mock", 
+          limit: 5,
+          dataset_source: "local",
+          dataset_id: "local_basic",
+          fixture_path: "datasets/basic_statistics.json"
+        })
       });
       if (res.ok) {
         window.location.reload();
@@ -174,25 +181,39 @@ export default function Leaderboard() {
         <thead>
           <tr>
             <th>Run</th>
+            <th>Status</th>
             <th>Stage</th>
             <th>Model</th>
+            <th>Dataset</th>
+            <th>Samples</th>
             <th>OK Rate</th>
-            <th>Mean Abs Err (mean)</th>
+            <th>Mean Err</th>
+            <th>Min Err</th>
+            <th>Max Err</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 && (
-            <tr><td colSpan={5} className="muted">No runs match the filters. Try adjusting or clearing them.</td></tr>
+            <tr><td colSpan={10} className="muted">No runs match the filters. Try adjusting or clearing them.</td></tr>
           )}
-          {items.map((r: any) => (
-            <tr key={r.run_id}>
-              <td><a href={`/runs/${r.run_id}`}>{r.run_id}</a></td>
-              <td>{r.stage}</td>
-              <td>{r.model}</td>
-              <td>{((r.aggregate?.ok_rate ?? 0) * 100).toFixed(1)}%</td>
-              <td>{(r.aggregate?.mean_abs_err_mean ?? r.aggregate?.["mean_abs_err_mean"]) ?? "-"}</td>
-            </tr>
-          ))}
+          {items.map((r: any) => {
+            const agg = r.aggregate || {};
+            const ds = r.dataset || {};
+            return (
+              <tr key={r.run_id}>
+                <td><a href={`/runs/${r.run_id}`}>{r.run_id}</a></td>
+                <td style={{ color: r.status === 'completed' ? 'var(--fg-platinum)' : 'var(--fg-tiger)' }}>{r.status || 'completed'}</td>
+                <td>{r.stage}</td>
+                <td>{r.model}</td>
+                <td>{ds.dataset_id || '-'}</td>
+                <td>{agg.samples ?? '-'}</td>
+                <td>{((agg.ok_rate ?? 0) * 100).toFixed(1)}%</td>
+                <td>{agg.mean_abs_err_mean ?? '-'}</td>
+                <td>{agg.min_abs_err_mean ?? '-'}</td>
+                <td>{agg.max_abs_err_mean ?? '-'}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

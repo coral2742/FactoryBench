@@ -6,6 +6,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "@remix-run/react";
 import globalStylesUrl from "./styles/global.css";
 
@@ -24,6 +25,9 @@ export const meta: MetaFunction = () => ([
 ]);
 
 export default function App() {
+  const location = useLocation();
+  const path = location.pathname;
+  const isActive = (href: string) => (path === href || (href !== '/' && path.startsWith(href))) ? 'active' : '';
   return (
     <html lang="en">
       <head>
@@ -38,8 +42,9 @@ export default function App() {
               FactoryBench
             </a>
             <nav className="nav">
-              <a href="/leaderboard">Leaderboard</a>
-              <a href="/analysis">Analysis</a>
+              <a className={isActive('/leaderboard')} href="/leaderboard">Leaderboard</a>
+              <a className={isActive('/analysis')} href="/analysis">Analysis</a>
+              <a className={isActive('/run')} href="/run">Run</a>
             </nav>
           </div>
         </header>
