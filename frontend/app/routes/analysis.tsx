@@ -99,7 +99,7 @@ export default function Analysis() {
 
       {/* Stage Tabs */}
       <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 8, borderBottom: "2px solid var(--fg-border)", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 8, borderBottom: "2px solid var(--fg-border)", paddingBottom: 8, marginBottom: 24 }}>
           {stages.map(stage => (
             <button
               key={stage.id}
@@ -143,9 +143,10 @@ function ChartCard({ title, type, runs }: { title: string; type: string; runs: a
   const downloadChart = async () => {
     const apiBase = "http://127.0.0.1:5173";
     const url = `${apiBase}/charts/${type}`;
+    const timestamp = new Date().toISOString().split('T')[0];
     const link = document.createElement("a");
     link.href = url;
-    link.download = `factorybench-${type}.png`;
+    link.download = `factorybench-${type}-${timestamp}.png`;
     link.click();
   };
 
@@ -233,8 +234,12 @@ function ChartCard({ title, type, runs }: { title: string; type: string; runs: a
                 ✕
               </button>
             </div>
-            <div style={{ transform: "scale(1.5)", transformOrigin: "top left", marginBottom: 100 }}>
-              {chartContent}
+            <div style={{ width: "100%", height: "auto", display: "flex", justifyContent: "center" }}>
+              <img
+                src={chartUrl}
+                alt={title}
+                style={{ maxWidth: "100%", maxHeight: "70vh", width: "auto", height: "auto", objectFit: "contain" }}
+              />
             </div>
           </div>
         </div>

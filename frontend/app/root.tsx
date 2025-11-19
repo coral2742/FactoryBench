@@ -29,7 +29,7 @@ export default function App() {
         <header className="header">
           <div className="container">
             <a className="brand" href="/">
-              <img src="/Forgis_white logomark.png" alt="Forgis" style={{ height: 32, marginRight: 8 }} />
+              <img src="/Forgis_white logomark.png" alt="Forgis" style={{ height: 32, width: 32, objectFit: "contain", marginRight: 8 }} />
               FactoryBench
             </a>
             <nav className="nav">
