@@ -56,10 +56,82 @@ export default function Leaderboard() {
   const [creating, setCreating] = React.useState(false);
   const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false);
   const [datasetDropdownOpen, setDatasetDropdownOpen] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<string>("run_id");
+  const [sortDir, setSortDir] = React.useState<"asc" | "desc">("desc");
 
   const modelFilters = searchParams.getAll("model");
   const datasetFilters = searchParams.getAll("dataset");
   const stageFilter = searchParams.get("stage") || "";
+
+  function toggleSort(column: string) {
+    if (sortBy === column) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(column);
+      setSortDir("asc");
+    }
+  }
+
+  const sortedItems = React.useMemo(() => {
+    const sorted = [...items].sort((a: any, b: any) => {
+      let aVal: any, bVal: any;
+      if (sortBy === "ok_rate") {
+        aVal = a.aggregate?.ok_rate ?? 0;
+        bVal = b.aggregate?.ok_rate ?? 0;
+      } else if (sortBy === "mean_err") {
+        aVal = a.aggregate?.mean_abs_err_mean ?? 0;
+        bVal = b.aggregate?.mean_abs_err_mean ?? 0;
+      } else if (sortBy === "min_err") {
+        aVal = a.aggregate?.min_abs_err_mean ?? 0;
+        bVal = b.aggregate?.min_abs_err_mean ?? 0;
+      } else if (sortBy === "max_err") {
+        aVal = a.aggregate?.max_abs_err_mean ?? 0;
+        bVal = b.aggregate?.max_abs_err_mean ?? 0;
+      } else if (sortBy === "cost_per_sample") {
+        aVal = a.aggregate?.cost_per_sample ?? 0;
+        bVal = b.aggregate?.cost_per_sample ?? 0;
+      } else if (sortBy === "cost_total") {
+        aVal = a.aggregate?.cost_total ?? 0;
+        bVal = b.aggregate?.cost_total ?? 0;
+      } else if (sortBy === "samples") {
+        aVal = a.aggregate?.samples ?? 0;
+        bVal = b.aggregate?.samples ?? 0;
+      } else if (sortBy === "dataset") {
+        aVal = a.dataset?.dataset_id || "";
+        bVal = b.dataset?.dataset_id || "";
+      } else if (sortBy === "model") {
+        aVal = a.model || "";
+        bVal = b.model || "";
+      } else if (sortBy === "stage") {
+        aVal = a.stage || "";
+        bVal = b.stage || "";
+      } else if (sortBy === "status") {
+        aVal = a.status || "";
+        bVal = b.status || "";
+      } else {
+        aVal = a.run_id || "";
+        bVal = b.run_id || "";
+      }
+      if (typeof aVal === "string") {
+        return sortDir === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      return sortDir === "asc" ? aVal - bVal : bVal - aVal;
+    });
+    return sorted;
+  }, [items, sortBy, sortDir]);
+
+  // Helper components
+  const SortTh = ({ column, label, sortBy, sortDir, onToggle }: any) => {
+    const isActive = sortBy === column;
+    return (
+      <th onClick={() => onToggle(column)} style={{ cursor: 'pointer', userSelect: 'none' }}>
+        {label} {isActive && (sortDir === 'asc' ? '↑' : '↓')}
+      </th>
+    );
+  };
+
+  const fmtNum = (val: any) => (val != null ? val.toFixed(3) : '-');
+  const fmtCost = (val: any) => (val != null ? `$${val.toFixed(6)}` : '-');
 
   function toggleFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams);
@@ -180,41 +252,42 @@ export default function Leaderboard() {
       <table className="table">
         <thead>
           <tr>
-            <th>Run</th>
-            <th>Status</th>
-            <th>Stage</th>
-            <th>Model</th>
-            <th>Dataset</th>
-            <th>Samples</th>
-            <th>OK Rate</th>
-            <th>Mean Err</th>
-            <th>Min Err</th>
-            <th>Max Err</th>
-            <th>Cost/Sample</th>
-            <th>Total Cost</th>
+            <SortTh column="run_id" label="Run" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="status" label="Status" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="stage" label="Stage" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="model" label="Model" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="dataset" label="Dataset" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="samples" label="Samples" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="ok_rate" label="OK %" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="mean_err" label="Mean" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="min_err" label="Min" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="max_err" label="Max" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="cost_per_sample" label="$/Sample" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
+            <SortTh column="cost_total" label="Total $" sortBy={sortBy} sortDir={sortDir} onToggle={toggleSort} />
           </tr>
         </thead>
         <tbody>
-          {items.length === 0 && (
+          {sortedItems.length === 0 && (
             <tr><td colSpan={12} className="muted">No runs match the filters. Try adjusting or clearing them.</td></tr>
           )}
-          {items.map((r: any) => {
+          {sortedItems.map((r: any) => {
             const agg = r.aggregate || {};
             const ds = r.dataset || {};
+            const stageShort = r.stage === 'telemetry_literacy' ? 'TL' : r.stage === 'root_cause_analysis' ? 'RCA' : r.stage === 'guided_remediation' ? 'GR' : r.stage || '-';
             return (
               <tr key={r.run_id}>
                 <td><a href={`/runs/${r.run_id}`}>{r.run_id}</a></td>
                 <td style={{ color: r.status === 'completed' ? 'var(--fg-platinum)' : 'var(--fg-tiger)' }}>{r.status || 'completed'}</td>
-                <td>{r.stage}</td>
+                <td>{stageShort}</td>
                 <td>{r.model}</td>
                 <td>{ds.dataset_id || '-'}</td>
                 <td>{agg.samples ?? '-'}</td>
                 <td>{((agg.ok_rate ?? 0) * 100).toFixed(1)}%</td>
-                <td>{agg.mean_abs_err_mean ?? '-'}</td>
-                <td>{agg.min_abs_err_mean ?? '-'}</td>
-                <td>{agg.max_abs_err_mean ?? '-'}</td>
-                <td>{agg.cost_per_sample != null ? agg.cost_per_sample.toFixed(6) : '-'}</td>
-                <td>{agg.cost_total != null ? agg.cost_total.toFixed(6) : '-'}</td>
+                <td>{fmtNum(agg.mean_abs_err_mean)}</td>
+                <td>{fmtNum(agg.min_abs_err_mean)}</td>
+                <td>{fmtNum(agg.max_abs_err_mean)}</td>
+                <td>{fmtCost(agg.cost_per_sample)}</td>
+                <td>{fmtCost(agg.cost_total)}</td>
               </tr>
             );
           })}
