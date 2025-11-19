@@ -29,7 +29,7 @@ export default function App() {
         <header className="header">
           <div className="container">
             <a className="brand" href="/">
-              <img src="/logo.svg" alt="Forgis" />
+              <img src="/Forgis_white logomark.png" alt="Forgis" style={{ height: 32, marginRight: 8 }} />
               FactoryBench
             </a>
             <nav className="nav">
@@ -38,7 +38,7 @@ export default function App() {
             </nav>
           </div>
         </header>
-        <main className="container">
+        <main className="container" style={{ marginTop: 32 }}>
           <Outlet />
         </main>
         <footer className="footer">

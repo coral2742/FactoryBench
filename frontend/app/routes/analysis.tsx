@@ -21,6 +21,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Analysis() {
   const { items } = useLoaderData<typeof loader>();
+  const [activeTab, setActiveTab] = React.useState<"stage1" | "stage2" | "stage3">("stage1");
   
   // Compute aggregate metrics per stage
   const byStage = items.reduce((acc: any, r: any) => {
@@ -33,6 +34,44 @@ export default function Analysis() {
   const tlRuns = byStage.telemetry_literacy || [];
   const rcaRuns = byStage.root_cause_analysis || [];
   const grRuns = byStage.guided_remediation || [];
+
+  const stages = [
+    {
+      id: "stage1" as const,
+      title: "Stage 1: Telemetry Literacy",
+      runs: tlRuns,
+      charts: [
+        { title: "Error Distribution (Mean/Min/Max)", type: "error_distribution" },
+        { title: "Model Convergence", type: "convergence" },
+        { title: "OK Rate Over Time", type: "ok_rate" },
+        { title: "Model Comparison", type: "model_comparison" },
+        { title: "Error Breakdown by Metric", type: "error_breakdown" },
+        { title: "Performance vs Cost", type: "cost_quality" }
+      ]
+    },
+    {
+      id: "stage2" as const,
+      title: "Stage 2: Root Cause Analysis",
+      runs: rcaRuns,
+      charts: [
+        { title: "Retrieval Precision@K", type: "retrieval" },
+        { title: "Step Ordering Accuracy (Kendall τ)", type: "ordering" },
+        { title: "Fault Classification F1", type: "classification" }
+      ]
+    },
+    {
+      id: "stage3" as const,
+      title: "Stage 3: Guided Remediation",
+      runs: grRuns,
+      charts: [
+        { title: "Safety Compliance Score", type: "safety" },
+        { title: "Instruction Quality (BLEURT)", type: "quality" },
+        { title: "Coverage vs Efficiency", type: "coverage_efficiency" }
+      ]
+    }
+  ];
+
+  const currentStage = stages.find(s => s.id === activeTab) || stages[0];
 
   return (
     <div>
@@ -55,209 +94,151 @@ export default function Analysis() {
           >
             Open WandB Dashboard →
           </a>
-          {/* Optional: embed iframe when WandB project is live
-          <iframe 
-            src="https://wandb.ai/forgis/factorybench/reports/..." 
-            style={{ width: "100%", height: 400, border: "1px solid var(--fg-border)", borderRadius: 8, marginTop: 12 }}
-          />
-          */}
         </div>
       </div>
 
-      {/* Stage 1: Telemetry Literacy */}
-      <StageSection
-        title="Stage 1: Telemetry Literacy"
-        runs={tlRuns}
-        charts={[
-          { title: "Error Distribution (Mean/Min/Max)", type: "error_dist" },
-          { title: "Model Convergence", type: "convergence" },
-          { title: "OK Rate Over Time", type: "ok_rate" }
-        ]}
-      />
-
-      {/* Stage 2: Root Cause Analysis */}
-      <StageSection
-        title="Stage 2: Root Cause Analysis (Planned)"
-        runs={rcaRuns}
-        charts={[
-          { title: "Retrieval Precision@K", type: "retrieval" },
-          { title: "Step Ordering Accuracy (Kendall τ)", type: "ordering" },
-          { title: "Fault Classification F1", type: "classification" }
-        ]}
-      />
-
-      {/* Stage 3: Guided Remediation */}
-      <StageSection
-        title="Stage 3: Guided Remediation (Planned)"
-        runs={grRuns}
-        charts={[
-          { title: "Safety Compliance Score", type: "safety" },
-          { title: "Instruction Quality (BLEURT)", type: "quality" },
-          { title: "Coverage vs Efficiency", type: "coverage_efficiency" }
-        ]}
-      />
-    </div>
-  );
-}
-
-function StageSection({ title, runs, charts }: { title: string; runs: any[]; charts: { title: string; type: string }[] }) {
-  const [isExpanded, setIsExpanded] = React.useState(true);
-
-  return (
-    <div className="card" style={{ marginBottom: 20 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <div>
-          <h3 style={{ margin: "0 0 4px 0" }}>{title}</h3>
-          <p className="muted" style={{ margin: 0 }}>{runs.length} runs</p>
-        </div>
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="btn"
-          style={{ fontSize: 14, padding: "4px 12px" }}
-        >
-          {isExpanded ? "Collapse" : "Expand"}
-        </button>
-      </div>
-      
-      {isExpanded && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 16 }}>
-          {charts.map(chart => (
-            <ChartPlaceholder key={chart.type} title={chart.title} type={chart.type} runs={runs} />
+      {/* Stage Tabs */}
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 8, borderBottom: "2px solid var(--fg-border)", marginBottom: 20 }}>
+          {stages.map(stage => (
+            <button
+              key={stage.id}
+              onClick={() => setActiveTab(stage.id)}
+              className="btn"
+              style={{
+                padding: "8px 16px",
+                background: activeTab === stage.id ? "var(--fg-fire)" : "transparent",
+                color: activeTab === stage.id ? "var(--fg-white)" : "var(--fg-steel)",
+                border: "none",
+                borderBottom: activeTab === stage.id ? "2px solid var(--fg-fire)" : "2px solid transparent",
+                marginBottom: -2,
+                cursor: "pointer",
+                fontSize: 14,
+                fontWeight: activeTab === stage.id ? 600 : 400
+              }}
+            >
+              {stage.title}
+              <span style={{ marginLeft: 8, opacity: 0.7 }}>({stage.runs.length})</span>
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Active Stage Content */}
+        <div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))", gap: 20 }}>
+            {currentStage.charts.map(chart => (
+              <ChartCard key={chart.type} title={chart.title} type={chart.type} runs={currentStage.runs} />
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
-function ChartPlaceholder({ title, type, runs }: { title: string; type: string; runs: any[] }) {
-  const svgRef = React.useRef<SVGSVGElement>(null);
+function ChartCard({ title, type, runs }: { title: string; type: string; runs: any[] }) {
+  const [isExpanded, setIsExpanded] = React.useState(false);
+  const imgRef = React.useRef<HTMLImageElement>(null);
 
-  const downloadSVG = () => {
-    if (!svgRef.current) return;
-    const svgData = new XMLSerializer().serializeToString(svgRef.current);
-    const blob = new Blob([svgData], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
+  const downloadChart = async () => {
+    const apiBase = "http://127.0.0.1:5173";
+    const url = `${apiBase}/charts/${type}`;
     const link = document.createElement("a");
     link.href = url;
-    link.download = `factorybench-${type}.svg`;
+    link.download = `factorybench-${type}.png`;
     link.click();
-    URL.revokeObjectURL(url);
   };
 
-  // Render minimal SVG chart using brand colors
-  // For telemetry_literacy: aggregate mean_abs_err_mean from runs
-  let chartContent = null;
+  // Use Python-generated charts from API
+  const apiBase = "http://127.0.0.1:5173";
+  const chartUrl = `${apiBase}/charts/${type}?t=${Date.now()}`;
 
-  if (type === "error_dist" && runs.length > 0) {
-    const errors = runs.map((r: any) => r.aggregate?.mean_abs_err_mean || 0);
-    const max = Math.max(...errors, 1);
-    chartContent = (
-      <svg ref={svgRef} width="100%" height="120" style={{ background: "#0f1d25", borderRadius: 6 }}>
-        {errors.map((err: number, i: number) => {
-          const barHeight = (err / max) * 100;
-          const x = (i / errors.length) * 100;
-          const width = 100 / errors.length - 2;
-          return (
-            <rect
-              key={i}
-              x={`${x}%`}
-              y={`${100 - barHeight}%`}
-              width={`${width}%`}
-              height={`${barHeight}%`}
-              fill="var(--fg-fire)"
-              opacity={0.8}
-            />
-          );
-        })}
-      </svg>
-    );
-  } else if (type === "convergence" && runs.length > 0) {
-    const sorted = [...runs].sort((a: any, b: any) => 
-      new Date(a.started_at || 0).getTime() - new Date(b.started_at || 0).getTime()
-    );
-    const errors = sorted.map((r: any) => r.aggregate?.mean_abs_err_mean || 0);
-    const max = Math.max(...errors, 1);
-    const points = errors.map((err: number, i: number) => {
-      const x = (i / (errors.length - 1)) * 100;
-      const y = 100 - (err / max) * 80;
-      return `${x},${y}`;
-    }).join(" ");
-    
-    chartContent = (
-      <svg ref={svgRef} width="100%" height="120" style={{ background: "#0f1d25", borderRadius: 6 }}>
-        <polyline
-          points={points}
-          fill="none"
-          stroke="var(--fg-tiger)"
-          strokeWidth="2"
-        />
-        {errors.map((err: number, i: number) => {
-          const x = (i / (errors.length - 1)) * 100;
-          const y = 100 - (err / max) * 80;
-          return <circle key={i} cx={`${x}%`} cy={y} r="3" fill="var(--fg-fire)" />;
-        })}
-      </svg>
-    );
-  } else if (type === "ok_rate" && runs.length > 0) {
-    const sorted = [...runs].sort((a: any, b: any) => 
-      new Date(a.started_at || 0).getTime() - new Date(b.started_at || 0).getTime()
-    );
-    const okRates = sorted.map((r: any) => (r.aggregate?.ok_rate || 0) * 100);
-    const points = okRates.map((rate: number, i: number) => {
-      const x = (i / (okRates.length - 1)) * 100;
-      const y = 100 - rate * 0.8;
-      return `${x},${y}`;
-    }).join(" ");
-    
-    chartContent = (
-      <svg ref={svgRef} width="100%" height="120" style={{ background: "#0f1d25", borderRadius: 6 }}>
-        <polyline
-          points={points}
-          fill="none"
-          stroke="var(--fg-flicker)"
-          strokeWidth="2"
-        />
-        {okRates.map((rate: number, i: number) => {
-          const x = (i / (okRates.length - 1)) * 100;
-          const y = 100 - rate * 0.8;
-          return <circle key={i} cx={`${x}%`} cy={y} r="3" fill="var(--fg-tiger)" />;
-        })}
-        <text x="10" y="20" fill="var(--fg-platinum)" fontSize="12">{okRates[okRates.length - 1]?.toFixed(1)}%</text>
-      </svg>
-    );
-  } else {
-    chartContent = (
-      <div style={{ 
-        background: "#0f1d25", 
-        height: 120, 
-        borderRadius: 6, 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center",
-        color: "var(--fg-steel)"
-      }}>
-        {runs.length === 0 ? "No data" : "Chart TBD"}
-      </div>
-    );
-  }
+  const chartContent = (
+    <img
+      ref={imgRef}
+      src={chartUrl}
+      alt={title}
+      style={{ width: "100%", height: "auto", borderRadius: 6 }}
+      onError={(e) => {
+        // Fallback to placeholder on error
+        (e.target as HTMLImageElement).style.display = "none";
+      }}
+    />
+  );
 
   return (
-    <div style={{ border: "1px solid var(--fg-border)", borderRadius: 8, padding: 12 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-        <h4 style={{ margin: 0, fontSize: 14 }}>{title}</h4>
-        {svgRef.current && (
-          <button
-            onClick={downloadSVG}
-            className="btn"
-            style={{ fontSize: 12, padding: "2px 8px" }}
-            title="Download SVG"
-          >
-            ↓ SVG
-          </button>
-        )}
+    <>
+      <div style={{ border: "1px solid var(--fg-border)", borderRadius: 8, padding: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <h4 style={{ margin: 0, fontSize: 15, fontWeight: 500 }}>{title}</h4>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              onClick={() => setIsExpanded(true)}
+              className="btn"
+              style={{ fontSize: 12, padding: "4px 10px" }}
+              title="Expand chart"
+            >
+              ⛶
+            </button>
+            <button
+              onClick={downloadChart}
+              className="btn"
+              style={{ fontSize: 12, padding: "4px 10px" }}
+              title="Download chart"
+            >
+              ↓
+            </button>
+          </div>
+        </div>
+        {chartContent}
       </div>
-      {chartContent}
-    </div>
+
+      {/* Expanded Modal */}
+      {isExpanded && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 40
+          }}
+          onClick={() => setIsExpanded(false)}
+        >
+          <div
+            style={{
+              background: "var(--bg-primary)",
+              borderRadius: 12,
+              padding: 32,
+              maxWidth: 1200,
+              width: "100%",
+              maxHeight: "90vh",
+              overflow: "auto"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h3 style={{ margin: 0 }}>{title}</h3>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="btn"
+                style={{ fontSize: 18 }}
+              >
+                ✕
+              </button>
+            </div>
+            <div style={{ transform: "scale(1.5)", transformOrigin: "top left", marginBottom: 100 }}>
+              {chartContent}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

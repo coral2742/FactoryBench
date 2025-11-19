@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, Dict, Any
 from pathlib import Path
@@ -10,8 +11,11 @@ from ..data.loader_tl import load_telemetry_literacy
 from ..adapters.mock import MockAdapter
 from ..adapters.openai import OpenAIAdapter
 from ..eval.runner import run_telemetry_literacy
+from ..viz.charts import generate_all_charts
 
 app = FastAPI(title="FactoryBench API", version="0.1.0")
+
+CHARTS_DIR = Path("charts")
 
 
 class RunRequest(BaseModel):
@@ -103,3 +107,23 @@ def _resolve_adapter(model: str):
     if OPENAI_API_KEY:
         return OpenAIAdapter(model=model or "gpt-5"), f"openai:{model or 'gpt-5'}"
     raise HTTPException(status_code=400, detail="Unknown model; try model=mock or openai:<name>")
+
+
+@app.get("/charts/{chart_type}")
+def get_chart(chart_type: str, regenerate: bool = False):
+    """Get a generated chart image."""
+    if regenerate or not CHARTS_DIR.exists():
+        generate_all_charts(RUN_DIR, CHARTS_DIR)
+    
+    chart_file = CHARTS_DIR / f"{chart_type}.png"
+    if not chart_file.exists():
+        raise HTTPException(status_code=404, detail=f"Chart {chart_type} not found")
+    
+    return FileResponse(chart_file, media_type="image/png")
+
+
+@app.post("/charts/regenerate")
+def regenerate_charts():
+    """Regenerate all charts from current runs."""
+    generate_all_charts(RUN_DIR, CHARTS_DIR)
+    return {"status": "ok", "charts_dir": str(CHARTS_DIR)}

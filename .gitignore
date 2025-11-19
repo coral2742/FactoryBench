@@ -43,6 +43,7 @@ Thumbs.db
 # FactoryBench specific
 runs/
 *.json.tmp
+charts/
 
 # Frontend
 frontend/node_modules/
