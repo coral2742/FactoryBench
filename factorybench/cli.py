@@ -19,9 +19,16 @@ def cli():
 @click.option("--hf-slug", default=None)
 @click.option("--hf-split", default="train")
 @click.option("--fixture-path", default="datasets/stage1.json")
+@click.option("--dataset-id", required=True, help="Dataset id from registry (e.g. local_basic, local_step_functions, local_patterns, hf_factoryset)")
 @click.option("--limit", default=10, type=int)
-def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, limit):
+def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, dataset_id, limit):
     """Evaluate telemetry_literacy (Stage 1) and write a run JSON."""
+    # Validate dataset id against registry
+    from .config import DATASETS
+    valid_ids = {d["id"] for d in DATASETS.get("telemetry_literacy", [])}
+    if dataset_id not in valid_ids:
+        raise click.UsageError(f"Invalid dataset_id '{dataset_id}'. Valid ids: {', '.join(sorted(valid_ids))}")
+    
     samples = load_telemetry_literacy(
         source=dataset_source,
         path=fixture_path,
@@ -45,6 +52,7 @@ def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, limit):
         model_name=model_name,
         dataset_meta={
             "source": dataset_source,
+            "dataset_id": dataset_id,
             "hf_slug": hf_slug,
             "split": hf_split,
             "limit": limit,

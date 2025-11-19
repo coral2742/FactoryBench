@@ -180,7 +180,7 @@ uv run uvicorn factorybench.api.app:app --reload --port 5173
 
 3) Create a sample run (mock model):
 ```powershell
-uv run python -m factorybench.cli run-stage1 --model mock --limit 5
+uv run python -m factorybench.cli run-stage1 --model mock --dataset-id local_basic --fixture-path datasets/basic_statistics.json --limit 5
 ```
 
 4) Frontend (Remix) in another terminal:
@@ -287,7 +287,7 @@ uv run uvicorn factorybench.api.app:app --reload --port 5173
 
 3) Create a sample run (mock model):
 ```powershell
-uv run python -m factorybench.cli run-stage1 --model mock --limit 5
+uv run python -m factorybench.cli run-stage1 --model mock --dataset-id local_basic --fixture-path datasets/basic_statistics.json --limit 5
 ```
 
 4) Frontend (Remix) in another terminal:

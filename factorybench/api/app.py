@@ -32,7 +32,7 @@ class RunRequest(BaseModel):
     stage: Literal["telemetry_literacy"] = "telemetry_literacy"
     model: str = Field(default="mock", description="mock | azure:<deployment>")
     dataset_source: Literal["local", "hf"] = "local"
-    dataset_id: Optional[str] = None
+    dataset_id: Optional[str] = None  # Must be explicitly provided; no autodetection
     hf_slug: Optional[str] = None
     split: str = "train"
     limit: Optional[int] = 25
@@ -112,9 +112,18 @@ def create_run(req: RunRequest):
 
     adapter, model_name = _resolve_adapter(req.model)
 
+    # Require explicit dataset_id and validate against registry
+    dataset_id = req.dataset_id
+    if not dataset_id:
+        raise HTTPException(status_code=400, detail="dataset_id required; provide a valid dataset id from registry")
+    # Validate dataset id exists for the stage
+    valid_ids = {d["id"] for d in DATASETS.get(req.stage, [])}
+    if dataset_id not in valid_ids:
+        raise HTTPException(status_code=400, detail=f"Unknown dataset_id '{dataset_id}' for stage '{req.stage}'")
+
     dataset_meta = {
         "source": req.dataset_source,
-        "dataset_id": req.dataset_id,
+        "dataset_id": dataset_id,
         "hf_slug": req.hf_slug,
         "split": req.split,
         "limit": req.limit,
