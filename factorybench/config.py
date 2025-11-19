@@ -57,10 +57,13 @@ MODELS = [
     {"id": "azure:gpt-35-turbo", "name": "GPT-3.5 Turbo (Azure)", "provider": "azure"},
 ]
 
-# Simplified pricing (USD per 1K tokens) for Azure models (approximate; adjust with real billing data)
+# Azure OpenAI pricing (USD per 1K tokens) - updated Nov 2024
+# Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
 AZURE_PRICING = {
     "azure:gpt-35-turbo": {"input_per_1k": 0.0015, "output_per_1k": 0.002},
     "azure:gpt-4-turbo": {"input_per_1k": 0.01, "output_per_1k": 0.03},
-    "azure:gpt-4o": {"input_per_1k": 0.005, "output_per_1k": 0.015},
-    "azure:gpt-4o-mini": {"input_per_1k": 0.0015, "output_per_1k": 0.002},
+    # gpt-4o-2024-11-20 (latest as of Nov 2024)
+    "azure:gpt-4o": {"input_per_1k": 0.0025, "output_per_1k": 0.01},
+    # gpt-4o-mini-2024-07-18
+    "azure:gpt-4o-mini": {"input_per_1k": 0.00015, "output_per_1k": 0.0006},
 }
