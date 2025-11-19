@@ -149,7 +149,7 @@ uv venv
 uv pip install -e ".[dev]"
 ```
 
-Environment variables (examples): `OPENAI_API_KEY`, `HF_API_TOKEN`, `DATABASE_URL`, `REDIS_URL`, `FACTORYBENCH_S3_URL`.
+Environment variables (examples): `OPENAI_API_KEY`, `HF_API_TOKEN`, `WANDB_API_KEY`, `DATABASE_URL`, `REDIS_URL`, `FACTORYBENCH_S3_URL`.
 
 Fallback (without uv):
 ```powershell

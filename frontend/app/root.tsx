@@ -28,9 +28,13 @@ export default function App() {
       <body>
         <header className="header">
           <div className="container">
-            <a className="brand" href="/">FactoryBench</a>
+            <a className="brand" href="/">
+              <img src="/logo.svg" alt="Forgis" />
+              FactoryBench
+            </a>
             <nav className="nav">
               <a href="/leaderboard">Leaderboard</a>
+              <a href="/analysis">Analysis</a>
             </nav>
           </div>
         </header>

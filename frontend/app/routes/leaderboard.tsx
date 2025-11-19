@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
+import * as React from "react";
 
 async function fetchRuns(apiBase: string) {
   try {
@@ -20,9 +21,37 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Leaderboard() {
   const { items } = useLoaderData<typeof loader>();
+  const [creating, setCreating] = React.useState(false);
+
+  async function createRun() {
+    setCreating(true);
+    try {
+      const apiBase = typeof window !== "undefined" ? "http://127.0.0.1:5173" : "";
+      const res = await fetch(`${apiBase}/runs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stage: "telemetry_literacy", model: "mock", limit: 5 })
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert("Failed to create run");
+      }
+    } catch (err) {
+      alert("Error creating run: " + err);
+    } finally {
+      setCreating(false);
+    }
+  }
+
   return (
     <div className="card">
-      <h2 style={{ marginTop: 0 }}>Leaderboard</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 style={{ margin: 0 }}>Leaderboard</h2>
+        <button className="btn primary" onClick={createRun} disabled={creating}>
+          {creating ? "Creating..." : "+ Create Mock Run"}
+        </button>
+      </div>
       <table className="table">
         <thead>
           <tr>
