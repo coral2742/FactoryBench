@@ -100,7 +100,7 @@ Samples → Prompt Builder → Model Adapter → Parser → Scoring → Artifact
 
 Features:
 - Stage 1 deterministic scoring (mean/min/max abs errors)
-- Model adapters (OpenAI, mock); logging + reproducible run manifests
+- Model adapters (Azure OpenAI, mock); logging + reproducible run manifests
 - Local JSON artifacts for runs in `runs/`
 
 ### 3. Frontend Application (Remix)
@@ -137,7 +137,7 @@ POST /runs              # create a new telemetry_literacy run
 - HF Datasets for optional data loading
 
 ### Model Integration
-- OpenAI SDK (optional), Mock adapter by default
+- Azure OpenAI SDK, Mock adapter by default
 
 ## Development Environment
 
@@ -149,7 +149,7 @@ uv venv
 uv pip install -e ".[dev]"
 ```
 
-Environment variables (examples): `OPENAI_API_KEY`, `HF_API_TOKEN`, `WANDB_API_KEY`, `DATABASE_URL`, `REDIS_URL`, `FACTORYBENCH_S3_URL`.
+Environment variables (examples): `HF_API_TOKEN`, `WANDB_API_KEY`, `DATABASE_URL`, `REDIS_URL`, `FACTORYBENCH_S3_URL`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT`.
 
 Fallback (without uv):
 ```powershell
@@ -162,14 +162,15 @@ python -m venv .venv
 
 Prereqs: Python 3.11+, Node 18+, npm
 
-1) Install Python deps and set env (optional for OpenAI):
+1) Install Python deps and set env (optional for Azure):
 ```powershell
 pipx install uv
 uv venv
 uv pip install -e .
 Copy-Item .env.example .env -ErrorAction SilentlyContinue
-# Optional if using OpenAI adapter
-$env:OPENAI_API_KEY="<your_key>"
+# Optional if using Azure OpenAI adapter
+$env:AZURE_OPENAI_API_KEY="<your_key>"
+$env:AZURE_OPENAI_ENDPOINT="<your_endpoint>"
 ```
 
 2) Start the API (Stage 1: telemetry_literacy):
@@ -268,14 +269,15 @@ We’ll replace these with the actual slugs after the HF repos are created.
 
 Prereqs: Python 3.11+, Node 18+, npm
 
-1) Install Python deps and set env (optional for OpenAI):
+1) Install Python deps and set env (optional for Azure):
 ```powershell
 pipx install uv
 uv venv
 uv pip install -e .
 Copy-Item .env.example .env -ErrorAction SilentlyContinue
-# Optional if using OpenAI adapter
-$env:OPENAI_API_KEY="<your_key>"
+# Optional if using Azure OpenAI adapter
+$env:AZURE_OPENAI_API_KEY="<your_key>"
+$env:AZURE_OPENAI_ENDPOINT="<your_endpoint>"
 ```
 
 2) Start the API (Stage 1: telemetry_literacy):

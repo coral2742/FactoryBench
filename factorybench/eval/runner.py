@@ -8,11 +8,15 @@ from ..adapters.base import ModelAdapter
 from ..metrics.telemetry_literacy import score_sample, aggregate
 
 
-def build_prompt(series: list[float]) -> str:
+def build_prompt(sample: Dict[str, Any]) -> str:
+    values = sample.get("values", [])
+    timestamps = sample.get("timestamps", [])
+    
     return (
-        "You are given a numeric time series. Compute and return only these values:\n"
+        "You are given a numeric time series with timestamps. Compute and return only these values:\n"
         "mean=<float> min=<float> max=<float>\n"
-        f"Series: {series}\n"
+        f"Timestamps: {timestamps}\n"
+        f"Values: {values}\n"
         "Output format: mean=<float> min=<float> max=<float>"
     )
 
@@ -28,18 +32,22 @@ def run_telemetry_literacy(
     scores: List[Dict[str, Any]] = []
 
     for s in samples:
-        pred_text = adapter.generate(build_prompt(s["series"]))
+        pred_text = adapter.generate(build_prompt(s))
         sc = score_sample(s, pred_text)
         scores.append(sc)
-        results.append(
-            {
-                "id": s.get("id"),
-                "series": s.get("series"),
-                "reference": s.get("reference"),
-                "prediction_text": pred_text,
-                "metrics": sc,
-            }
-        )
+        
+        result_item = {
+            "id": s.get("id"),
+            "values": s.get("values"),
+            "timestamps": s.get("timestamps"),
+            "domain": s.get("domain"),
+            "subtype": s.get("subtype"),
+            "statistics": s.get("statistics"),
+            "prediction_text": pred_text,
+            "metrics": sc,
+        }
+        
+        results.append(result_item)
 
     agg = aggregate(scores)
     run = {

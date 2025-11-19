@@ -6,11 +6,10 @@ from typing import Optional, Literal, Dict, Any, List
 from pathlib import Path
 import json
 
-from ..config import RUN_DIR, OPENAI_API_KEY, AZURE_OPENAI_API_KEY, DATASETS, MODELS
+from ..config import RUN_DIR, AZURE_OPENAI_API_KEY, DATASETS, MODELS
 from ..stages import Stage, normalize_stage
 from ..data.loader_tl import load_telemetry_literacy
 from ..adapters.mock import MockAdapter
-from ..adapters.openai import OpenAIAdapter
 from ..adapters.azure_openai import AzureOpenAIAdapter
 from ..eval.runner import run_telemetry_literacy
 from ..viz.charts import generate_all_charts
@@ -31,12 +30,13 @@ CHARTS_DIR = Path("charts")
 
 class RunRequest(BaseModel):
     stage: Literal["telemetry_literacy"] = "telemetry_literacy"
-    model: str = Field(default="mock", description="mock | openai:<name> | azure:<deployment>")
+    model: str = Field(default="mock", description="mock | azure:<deployment>")
     dataset_source: Literal["local", "hf"] = "local"
+    dataset_id: Optional[str] = None
     hf_slug: Optional[str] = None
     split: str = "train"
     limit: Optional[int] = 25
-    fixture_path: str = "fixtures/stage1.json"
+    fixture_path: str = "datasets/stage1.json"
 
 
 @app.get("/healthz")
@@ -50,7 +50,7 @@ def list_runs(
     dataset: Optional[List[str]] = Query(None),
     stage: Optional[str] = None,
 ):
-    """List runs with optional filtering by model, dataset source, and stage."""
+    """List runs with optional filtering by model, dataset ID, and stage."""
     RUN_DIR.mkdir(parents=True, exist_ok=True)
     items = []
     for p in sorted(Path(RUN_DIR).glob("*.json")):
@@ -64,8 +64,8 @@ def list_runs(
             if stage and data.get("stage") != stage:
                 continue
             if dataset:
-                dataset_source = data.get("dataset", {}).get("source")
-                if dataset_source not in dataset:
+                dataset_id = data.get("dataset", {}).get("dataset_id")
+                if dataset_id not in dataset:
                     continue
             
             items.append(
@@ -114,6 +114,7 @@ def create_run(req: RunRequest):
 
     dataset_meta = {
         "source": req.dataset_source,
+        "dataset_id": req.dataset_id,
         "hf_slug": req.hf_slug,
         "split": req.split,
         "limit": req.limit,
@@ -134,14 +135,7 @@ def _resolve_adapter(model: str):
         if not AZURE_OPENAI_API_KEY:
             raise HTTPException(status_code=400, detail="AZURE_OPENAI_API_KEY not configured")
         return AzureOpenAIAdapter(deployment=deployment), f"azure:{deployment}"
-    if model.startswith("openai:"):
-        name = model.split(":", 1)[1] or "gpt-5"
-        if not OPENAI_API_KEY:
-            raise HTTPException(status_code=400, detail="OPENAI_API_KEY not configured")
-        return OpenAIAdapter(model=name), f"openai:{name}"
-    if OPENAI_API_KEY:
-        return OpenAIAdapter(model=model or "gpt-5"), f"openai:{model or 'gpt-5'}"
-    raise HTTPException(status_code=400, detail="Unknown model; try model=mock, openai:<name>, or azure:<deployment>")
+    raise HTTPException(status_code=400, detail="Unknown model; try model=mock or azure:<deployment>")
 
 
 @app.get("/charts/{chart_type}")

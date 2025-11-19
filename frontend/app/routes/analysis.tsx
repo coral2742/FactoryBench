@@ -144,7 +144,7 @@ export default function Analysis() {
 
           <MultiSelectDropdown
             label="Dataset"
-            options={datasets.map((d: any) => ({ id: d.source, name: d.name }))}
+            options={datasets.map((d: any) => ({ id: d.id, name: d.name }))}
             selected={datasetFilters}
             onToggle={(value) => toggleFilter("dataset", value)}
             isOpen={datasetDropdownOpen}

@@ -3,10 +3,9 @@ import click
 
 from .data.loader_tl import load_telemetry_literacy
 from .adapters.mock import MockAdapter
-from .adapters.openai import OpenAIAdapter
 from .adapters.azure_openai import AzureOpenAIAdapter
 from .eval.runner import run_telemetry_literacy
-from .config import OPENAI_API_KEY, AZURE_OPENAI_API_KEY
+from .config import AZURE_OPENAI_API_KEY
 
 
 @click.group()
@@ -15,11 +14,11 @@ def cli():
 
 
 @cli.command("run-stage1")
-@click.option("--model", default="mock", help="mock | openai:<model> | azure:<deployment>")
+@click.option("--model", default="mock", help="mock | azure:<deployment>")
 @click.option("--dataset-source", default="local", type=click.Choice(["local", "hf"]))
 @click.option("--hf-slug", default=None)
 @click.option("--hf-split", default="train")
-@click.option("--fixture-path", default="fixtures/stage1.json")
+@click.option("--fixture-path", default="datasets/stage1.json")
 @click.option("--limit", default=10, type=int)
 def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, limit):
     """Evaluate telemetry_literacy (Stage 1) and write a run JSON."""
@@ -38,13 +37,7 @@ def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, limit):
             raise click.UsageError("AZURE_OPENAI_API_KEY not configured; use model=mock or set key")
         adapter, model_name = AzureOpenAIAdapter(deployment=deployment), f"azure:{deployment}"
     else:
-        if model.startswith("openai:"):
-            name = model.split(":", 1)[1]
-        else:
-            name = model
-        if not OPENAI_API_KEY:
-            raise click.UsageError("OPENAI_API_KEY not configured; use model=mock or set key")
-        adapter, model_name = OpenAIAdapter(model=name), f"openai:{name}"
+        raise click.UsageError("Unknown model; use model=mock or azure:<deployment>")
 
     run = run_telemetry_literacy(
         samples=samples,
@@ -74,7 +67,7 @@ def components_test(time_series_encoder, limit):
         samples=samples,
         adapter=MockAdapter(),
         model_name="mock",
-        dataset_meta={"source": "local", "limit": limit, "fixture_path": "fixtures/stage1.json"},
+        dataset_meta={"source": "local", "limit": limit, "fixture_path": "datasets/stage1.json"},
     )
     click.echo(json.dumps({"run_id": run["run_id"], "aggregate": run["aggregate"]}, indent=2))
 

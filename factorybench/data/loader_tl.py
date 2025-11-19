@@ -10,7 +10,7 @@ except Exception:  # pragma: no cover
 
 def load_telemetry_literacy(
     source: str = "local",
-    path: str = "fixtures/stage1.json",
+    path: str = "datasets/basic_statistics.json",
     hf_slug: Optional[str] = None,
     split: str = "train",
     limit: Optional[int] = None,
@@ -23,21 +23,26 @@ def load_telemetry_literacy(
         ds = load_dataset(hf_slug, split=split, streaming=False)
         rows: List[Dict[str, Any]] = []
         for r in ds:
+            # HF dataset structure: id, timestamps, values, domain, subtype, statistics
             rows.append(
                 {
                     "id": r.get("id"),
-                    "series": list(r.get("series", [])),
-                    "reference": dict(r.get("reference", {})),
+                    "timestamps": list(r.get("timestamps", [])),
+                    "values": list(r.get("values", [])),
+                    "domain": r.get("domain"),
+                    "subtype": r.get("subtype"),
+                    "statistics": dict(r.get("statistics", {})),
                 }
             )
             if limit and len(rows) >= limit:
                 break
         return rows
 
-    # local
+    # local - new format only (timestamps, values, statistics)
     p = Path(path)
     if not p.exists():
-        raise FileNotFoundError(f"Fixture not found: {p}")
+        raise FileNotFoundError(f"Dataset not found: {p}")
     with p.open("r", encoding="utf-8") as f:
         data = json.load(f)
+    
     return data[:limit] if limit else data
