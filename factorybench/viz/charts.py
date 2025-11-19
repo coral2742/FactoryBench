@@ -349,27 +349,57 @@ def _create_empty_chart(message: str) -> Figure:
     return fig
 
 
-def generate_all_charts(runs_dir: Path, output_dir: Path):
+def generate_all_charts(runs_dir: Path, output_dir: Path, model_filters: list = None, dataset_filters: list = None):
     """
     Generate all charts for all runs in the runs directory.
     
     Args:
         runs_dir: Directory containing run JSON files
         output_dir: Directory to save chart images
+        model_filters: Optional list of model IDs to filter runs
+        dataset_filters: Optional list of dataset sources to filter runs
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Load all runs
     runs = []
+    all_runs_count = 0
     for run_file in runs_dir.glob("*.json"):
+        all_runs_count += 1
         with open(run_file) as f:
-            runs.append(json.load(f))
+            run_data = json.load(f)
+            
+            # Apply filters
+            if model_filters and run_data.get("model") not in model_filters:
+                continue
+            if dataset_filters:
+                dataset_source = run_data.get("dataset", {}).get("source")
+                if dataset_source not in dataset_filters:
+                    continue
+                    
+            runs.append(run_data)
     
     if not runs:
-        print("No runs found")
+        print(f"No runs found matching filters (total runs: {all_runs_count})")
+        print(f"  model_filters: {model_filters}")
+        print(f"  dataset_filters: {dataset_filters}")
+        # Create empty/placeholder charts
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "error_distribution.png", dpi=300, facecolor=COLORS["gunmetal"])
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "convergence.png", dpi=300, facecolor=COLORS["gunmetal"])
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "ok_rate.png", dpi=300, facecolor=COLORS["gunmetal"])
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "model_comparison.png", dpi=300, facecolor=COLORS["gunmetal"])
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "error_breakdown.png", dpi=300, facecolor=COLORS["gunmetal"])
+        _create_empty_chart("No data matches current filters").savefig(output_dir / "cost_quality.png", dpi=300, facecolor=COLORS["gunmetal"])
         return
     
-    print(f"Generating charts for {len(runs)} runs...")
+    filter_desc = []
+    if model_filters:
+        filter_desc.append(f"models={','.join(model_filters)}")
+    if dataset_filters:
+        filter_desc.append(f"datasets={','.join(dataset_filters)}")
+    filter_str = f" ({', '.join(filter_desc)})" if filter_desc else ""
+    
+    print(f"Generating charts for {len(runs)}/{all_runs_count} runs{filter_str}...")
     
     create_error_distribution_chart(runs, output_dir / "error_distribution.png")
     create_convergence_chart(runs, output_dir / "convergence.png")

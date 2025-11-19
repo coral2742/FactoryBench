@@ -11,7 +11,7 @@ export default function Index() {
       <p className="muted">Benchmark for industrial troubleshooting. Stage: telemetry_literacy (MVP).</p>
       <div style={{ marginTop: 12 }}>
         <a className="btn primary" href="/leaderboard">View Leaderboard</a>
-        <a className="btn" style={{ marginLeft: 8 }} href="/runs/demo">Open Demo Run</a>
+        <a className="btn" style={{ marginLeft: 8 }} href="/analysis">View Analysis</a>
       </div>
     </div>
   );
