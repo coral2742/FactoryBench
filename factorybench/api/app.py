@@ -6,7 +6,14 @@ from typing import Optional, Literal, Dict, Any, List
 from pathlib import Path
 import json
 
-from ..config import RUN_DIR, AZURE_OPENAI_API_KEY, DATASETS, MODELS
+from ..config import (
+    RUN_DIR,
+    AZURE_OPENAI_API_KEY,
+    AZURE_OPENAI_ENDPOINT,
+    AZURE_OPENAI_API_VERSION,
+    DATASETS,
+    MODELS,
+)
 from ..stages import Stage, normalize_stage
 from ..data.loader_tl import load_telemetry_literacy
 from ..adapters.mock import MockAdapter
@@ -130,8 +137,12 @@ def create_run(req: RunRequest):
         "limit": req.limit,
         "fixture_path": req.fixture_path,
     }
-    run = run_telemetry_literacy(samples, adapter, model_name, dataset_meta)
-    return run
+    try:
+        run = run_telemetry_literacy(samples, adapter, model_name, dataset_meta)
+        return run
+    except Exception as e:
+        # Capture unexpected errors and surface as JSON detail
+        raise HTTPException(status_code=500, detail=f"Run failed: {type(e).__name__}: {e}")
 
 
 def _resolve_adapter(model: str):
@@ -142,8 +153,15 @@ def _resolve_adapter(model: str):
         deployment = model.split(":", 1)[1]
         if not deployment:
             raise HTTPException(status_code=400, detail="Azure deployment name required: azure:<deployment>")
+        missing = []
         if not AZURE_OPENAI_API_KEY:
-            raise HTTPException(status_code=400, detail="AZURE_OPENAI_API_KEY not configured")
+            missing.append("AZURE_OPENAI_API_KEY")
+        if not AZURE_OPENAI_ENDPOINT:
+            missing.append("AZURE_OPENAI_ENDPOINT")
+        if not AZURE_OPENAI_API_VERSION:
+            missing.append("AZURE_OPENAI_API_VERSION")
+        if missing:
+            raise HTTPException(status_code=400, detail=f"Missing Azure configuration vars: {', '.join(missing)}")
         return AzureOpenAIAdapter(deployment=deployment), f"azure:{deployment}"
     raise HTTPException(status_code=400, detail="Unknown model; try model=mock or azure:<deployment>")
 

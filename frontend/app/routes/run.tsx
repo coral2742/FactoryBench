@@ -37,6 +37,7 @@ export async function action({ request }: ActionFunctionArgs) {
     dataset_source: dataset_id.startsWith("hf_") ? "hf" : "local",
     dataset_id,
     fixture_path: dataset_id.startsWith("local_") ? inferFixturePath(dataset_id) : undefined,
+    hf_slug: dataset_id.startsWith("hf_") ? inferHfSlug(dataset_id) : undefined,
     limit, // may be undefined
   };
   try {
@@ -45,7 +46,14 @@ export async function action({ request }: ActionFunctionArgs) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    const data = await res.json();
+    const contentType = res.headers.get('content-type') || '';
+    let data: any = null;
+    if (contentType.includes('application/json')) {
+      data = await res.json();
+    } else {
+      const text = await res.text();
+      data = { detail: text };
+    }
     if (!res.ok) return json({ ok:false, errors:{ server: data.detail || "Run creation failed" } }, { status: res.status });
     return json({ ok:true, run_id: data.run_id });
   } catch (e:any) {
@@ -58,6 +66,11 @@ function inferFixturePath(dataset_id: string){
   if (dataset_id === 'local_step_functions') return 'datasets/step_functions.json';
   if (dataset_id === 'local_patterns') return 'datasets/pattern_recognition.json';
   return 'datasets/basic_statistics.json';
+}
+
+function inferHfSlug(dataset_id: string){
+  if (dataset_id === 'hf_factoryset') return 'Forgis/FactorySet';
+  return undefined;
 }
 
 export default function RunPage(){

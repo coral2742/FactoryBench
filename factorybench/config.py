@@ -51,19 +51,32 @@ DATASETS = {
 # Model Registry
 MODELS = [
     {"id": "mock", "name": "Mock Adapter", "provider": "local"},
+    # Current generation (2024)
     {"id": "azure:gpt-4o", "name": "GPT-4o (Azure)", "provider": "azure"},
     {"id": "azure:gpt-4o-mini", "name": "GPT-4o Mini (Azure)", "provider": "azure"},
-    {"id": "azure:gpt-4-turbo", "name": "GPT-4 Turbo (Azure)", "provider": "azure"},
-    {"id": "azure:gpt-35-turbo", "name": "GPT-3.5 Turbo (Azure)", "provider": "azure"},
+    # Next generation (2025)
+    {"id": "azure:gpt-5", "name": "GPT-5 Global (SOTA)", "provider": "azure"},
+    {"id": "azure:o3-2025-04-16", "name": "o3 2025-04-16 (SOTA Affordable)", "provider": "azure"},
+    {"id": "azure:o4-mini-2025-04-16", "name": "o4-mini 2025-04-16 (Efficient RAG)", "provider": "azure"},
+    {"id": "azure:gpt-5-nano", "name": "GPT-5-nano (Super Inexpensive)", "provider": "azure"},
 ]
 
 # Azure OpenAI pricing (USD per 1K tokens) - updated Nov 2024
 # Source: https://azure.microsoft.com/en-us/pricing/details/cognitive-services/openai-service/
+# Prices converted from per 1M tokens to per 1K tokens (divide by 1000)
 AZURE_PRICING = {
-    "azure:gpt-35-turbo": {"input_per_1k": 0.0015, "output_per_1k": 0.002},
-    "azure:gpt-4-turbo": {"input_per_1k": 0.01, "output_per_1k": 0.03},
-    # gpt-4o-2024-11-20 (latest as of Nov 2024)
+    # Current generation (2024)
+    # gpt-4o-2024-11-20
     "azure:gpt-4o": {"input_per_1k": 0.0025, "output_per_1k": 0.01},
     # gpt-4o-mini-2024-07-18
     "azure:gpt-4o-mini": {"input_per_1k": 0.00015, "output_per_1k": 0.0006},
+    # Next generation (2025) - Global pricing per 1M tokens converted to per 1K
+    # GPT-5: $1.25/$10.00 per 1M → $0.00125/$0.01 per 1K
+    "azure:gpt-5": {"input_per_1k": 0.00125, "output_per_1k": 0.01},
+    # o3 2025-04-16: $2.00/$8.00 per 1M → $0.002/$0.008 per 1K
+    "azure:o3-2025-04-16": {"input_per_1k": 0.002, "output_per_1k": 0.008},
+    # o4-mini 2025-04-16: $1.10/$4.40 per 1M → $0.0011/$0.0044 per 1K
+    "azure:o4-mini-2025-04-16": {"input_per_1k": 0.0011, "output_per_1k": 0.0044},
+    # GPT-5-nano: $0.05/$0.40 per 1M → $0.00005/$0.0004 per 1K
+    "azure:gpt-5-nano": {"input_per_1k": 0.00005, "output_per_1k": 0.0004},
 }
