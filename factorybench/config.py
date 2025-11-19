@@ -10,6 +10,11 @@ RUN_DIR.mkdir(parents=True, exist_ok=True)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")
 
+# Azure OpenAI Configuration
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION")
+AZURE_OPENAI_ENDPOINT = os.getenv("AZURE_OPENAI_ENDPOINT")
+AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+
 # Dataset Registry
 DATASETS = {
     "telemetry_literacy": [
@@ -37,4 +42,8 @@ MODELS = [
     {"id": "openai:gpt-4", "name": "GPT-4", "provider": "openai"},
     {"id": "openai:gpt-4-turbo", "name": "GPT-4 Turbo", "provider": "openai"},
     {"id": "openai:gpt-3.5-turbo", "name": "GPT-3.5 Turbo", "provider": "openai"},
+    {"id": "azure:gpt-4o", "name": "GPT-4o (Azure)", "provider": "azure"},
+    {"id": "azure:gpt-4o-mini", "name": "GPT-4o Mini (Azure)", "provider": "azure"},
+    {"id": "azure:gpt-4-turbo", "name": "GPT-4 Turbo (Azure)", "provider": "azure"},
+    {"id": "azure:gpt-35-turbo", "name": "GPT-3.5 Turbo (Azure)", "provider": "azure"},
 ]

@@ -4,8 +4,9 @@ import click
 from .data.loader_tl import load_telemetry_literacy
 from .adapters.mock import MockAdapter
 from .adapters.openai import OpenAIAdapter
+from .adapters.azure_openai import AzureOpenAIAdapter
 from .eval.runner import run_telemetry_literacy
-from .config import OPENAI_API_KEY
+from .config import OPENAI_API_KEY, AZURE_OPENAI_API_KEY
 
 
 @click.group()
@@ -14,7 +15,7 @@ def cli():
 
 
 @cli.command("run-stage1")
-@click.option("--model", default="mock", help="mock | openai:<model>")
+@click.option("--model", default="mock", help="mock | openai:<model> | azure:<deployment>")
 @click.option("--dataset-source", default="local", type=click.Choice(["local", "hf"]))
 @click.option("--hf-slug", default=None)
 @click.option("--hf-split", default="train")
@@ -31,6 +32,11 @@ def run_stage1(model, dataset_source, hf_slug, hf_split, fixture_path, limit):
     )
     if model == "mock":
         adapter, model_name = MockAdapter(), "mock"
+    elif model.startswith("azure:"):
+        deployment = model.split(":", 1)[1]
+        if not AZURE_OPENAI_API_KEY:
+            raise click.UsageError("AZURE_OPENAI_API_KEY not configured; use model=mock or set key")
+        adapter, model_name = AzureOpenAIAdapter(deployment=deployment), f"azure:{deployment}"
     else:
         if model.startswith("openai:"):
             name = model.split(":", 1)[1]

@@ -6,11 +6,12 @@ from typing import Optional, Literal, Dict, Any, List
 from pathlib import Path
 import json
 
-from ..config import RUN_DIR, OPENAI_API_KEY, DATASETS, MODELS
+from ..config import RUN_DIR, OPENAI_API_KEY, AZURE_OPENAI_API_KEY, DATASETS, MODELS
 from ..stages import Stage, normalize_stage
 from ..data.loader_tl import load_telemetry_literacy
 from ..adapters.mock import MockAdapter
 from ..adapters.openai import OpenAIAdapter
+from ..adapters.azure_openai import AzureOpenAIAdapter
 from ..eval.runner import run_telemetry_literacy
 from ..viz.charts import generate_all_charts
 
@@ -30,7 +31,7 @@ CHARTS_DIR = Path("charts")
 
 class RunRequest(BaseModel):
     stage: Literal["telemetry_literacy"] = "telemetry_literacy"
-    model: str = Field(default="mock", description="mock | openai:gpt-5 | openai:<name>")
+    model: str = Field(default="mock", description="mock | openai:<name> | azure:<deployment>")
     dataset_source: Literal["local", "hf"] = "local"
     hf_slug: Optional[str] = None
     split: str = "train"
@@ -126,6 +127,13 @@ def _resolve_adapter(model: str):
     model = (model or "").strip()
     if model == "mock":
         return MockAdapter(), "mock"
+    if model.startswith("azure:"):
+        deployment = model.split(":", 1)[1]
+        if not deployment:
+            raise HTTPException(status_code=400, detail="Azure deployment name required: azure:<deployment>")
+        if not AZURE_OPENAI_API_KEY:
+            raise HTTPException(status_code=400, detail="AZURE_OPENAI_API_KEY not configured")
+        return AzureOpenAIAdapter(deployment=deployment), f"azure:{deployment}"
     if model.startswith("openai:"):
         name = model.split(":", 1)[1] or "gpt-5"
         if not OPENAI_API_KEY:
@@ -133,7 +141,7 @@ def _resolve_adapter(model: str):
         return OpenAIAdapter(model=name), f"openai:{name}"
     if OPENAI_API_KEY:
         return OpenAIAdapter(model=model or "gpt-5"), f"openai:{model or 'gpt-5'}"
-    raise HTTPException(status_code=400, detail="Unknown model; try model=mock or openai:<name>")
+    raise HTTPException(status_code=400, detail="Unknown model; try model=mock, openai:<name>, or azure:<deployment>")
 
 
 @app.get("/charts/{chart_type}")
