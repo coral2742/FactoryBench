@@ -22,10 +22,22 @@ class AzureOpenAIAdapter(ModelAdapter):
         )
         self.deployment = deployment
 
-    def generate(self, prompt: str) -> str:
-        resp = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-        )
-        return resp.choices[0].message.content or ""
+    def generate(self, prompt: str) -> dict:
+        try:
+            resp = self.client.chat.completions.create(
+                model=self.deployment,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0,
+            )
+            text = (resp.choices[0].message.content or "")
+            usage = getattr(resp, "usage", None)
+            usage_dict = {}
+            if usage:
+                usage_dict = {
+                    "prompt_tokens": getattr(usage, "prompt_tokens", None),
+                    "completion_tokens": getattr(usage, "completion_tokens", None),
+                    "total_tokens": getattr(usage, "total_tokens", None),
+                }
+            return {"text": text, "usage": usage_dict}
+        except Exception as e:
+            return {"text": f"ERROR: azure generation failed: {type(e).__name__}: {e}"[:500], "usage": {}}

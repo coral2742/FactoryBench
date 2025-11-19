@@ -37,6 +37,9 @@ export default function RunDetail() {
         <Metric label="Max Err" value={fmt(agg.max_abs_err_mean)} />
         <Metric label="Started" value={run.started_at?.replace('T',' ').slice(0,19) || '-'} />
         <Metric label="Ended" value={run.ended_at?.replace('T',' ').slice(0,19) || '-'} />
+        <Metric label="Total Tokens" value={agg.total_tokens ?? '-'} />
+        <Metric label="Cost Total" value={fmt(agg.cost_total)} />
+        <Metric label="Cost/Sample" value={fmt(agg.cost_per_sample)} />
       </div>
       <details style={{ marginTop:24 }}>
         <summary style={{ cursor:'pointer', fontWeight:500 }}>Raw Aggregate JSON</summary>

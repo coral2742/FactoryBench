@@ -190,11 +190,13 @@ export default function Leaderboard() {
             <th>Mean Err</th>
             <th>Min Err</th>
             <th>Max Err</th>
+            <th>Cost/Sample</th>
+            <th>Total Cost</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 && (
-            <tr><td colSpan={10} className="muted">No runs match the filters. Try adjusting or clearing them.</td></tr>
+            <tr><td colSpan={12} className="muted">No runs match the filters. Try adjusting or clearing them.</td></tr>
           )}
           {items.map((r: any) => {
             const agg = r.aggregate || {};
@@ -211,6 +213,8 @@ export default function Leaderboard() {
                 <td>{agg.mean_abs_err_mean ?? '-'}</td>
                 <td>{agg.min_abs_err_mean ?? '-'}</td>
                 <td>{agg.max_abs_err_mean ?? '-'}</td>
+                <td>{agg.cost_per_sample != null ? agg.cost_per_sample.toFixed(6) : '-'}</td>
+                <td>{agg.cost_total != null ? agg.cost_total.toFixed(6) : '-'}</td>
               </tr>
             );
           })}
