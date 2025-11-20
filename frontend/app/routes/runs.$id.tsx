@@ -168,6 +168,7 @@ export default function RunDetail() {
         <Metric label="Mean Err" value={fmt(agg.mean_abs_err_mean)} />
         <Metric label="Min Err" value={fmt(agg.min_abs_err_mean)} />
         <Metric label="Max Err" value={fmt(agg.max_abs_err_mean)} />
+        <Metric label="Performance" value={fmt(agg.performance)} />
         <Metric label="Started" value={run.started_at?.replace('T',' ').slice(0,19) || '-'} />
         <Metric label="Ended" value={run.ended_at?.replace('T',' ').slice(0,19) || '-'} />
         <Metric label="Total Tokens" value={agg.total_tokens ?? '-'} />
