@@ -53,7 +53,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export default function Leaderboard() {
   const { items, models, datasets } = useLoaderData<typeof loader>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [creating, setCreating] = React.useState(false);
   const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false);
   const [datasetDropdownOpen, setDatasetDropdownOpen] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<string>("run_id");
@@ -131,7 +130,7 @@ export default function Leaderboard() {
   };
 
   const fmtNum = (val: any) => (val != null ? val.toFixed(3) : '-');
-  const fmtCost = (val: any) => (val != null ? `$${val.toFixed(6)}` : '-');
+  const fmtCost = (val: any) => (val != null ? `$${val.toFixed(3)}` : '-');
 
   function toggleFilter(key: string, value: string) {
     const params = new URLSearchParams(searchParams);
@@ -158,42 +157,9 @@ export default function Leaderboard() {
     setSearchParams(params);
   }
 
-  async function createRun() {
-    setCreating(true);
-    try {
-      const apiBase = typeof window !== "undefined" ? "http://127.0.0.1:5173" : "";
-      const res = await fetch(`${apiBase}/runs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          stage: "telemetry_literacy", 
-          model: "mock", 
-          limit: 5,
-          dataset_source: "local",
-          dataset_id: "local_basic",
-          fixture_path: "datasets/basic_statistics.json"
-        })
-      });
-      if (res.ok) {
-        window.location.reload();
-      } else {
-        alert("Failed to create run");
-      }
-    } catch (err) {
-      alert("Error creating run: " + err);
-    } finally {
-      setCreating(false);
-    }
-  }
-
   return (
     <div className="card">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>Leaderboard</h2>
-        <button className="btn primary" onClick={createRun} disabled={creating}>
-          {creating ? "Creating..." : "+ Create Mock Run"}
-        </button>
-      </div>
+      <h2 style={{ marginBottom: 16 }}>Leaderboard</h2>
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
