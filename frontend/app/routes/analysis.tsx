@@ -236,6 +236,24 @@ function ChartCard({ title, type, runs, modelFilters, datasetFilters }: {
   datasetFilters?: string[];
 }) {
   const [isExpanded, setIsExpanded] = React.useState(false);
+  const [showInfo, setShowInfo] = React.useState(false);
+
+  // Chart explanations
+  const chartExplanations: Record<string, string> = {
+    error_distribution: "Shows the distribution of mean, min, and max errors across all samples.",
+    convergence: "Visualizes how model error decreases as more samples are processed.",
+    ok_rate: "Displays the percentage of correct predictions over time.",
+    model_comparison: "Compares performance metrics across different models.",
+    error_breakdown: "Breaks down errors by metric to highlight strengths and weaknesses.",
+    cost_quality: "Plots model performance against API cost for cost-effectiveness analysis.",
+    retrieval: "Measures how accurately the model retrieves relevant information (Precision@K).",
+    ordering: "Evaluates step ordering accuracy using Kendall tau correlation.",
+    classification: "Shows F1 score for fault classification tasks.",
+    safety: "Assesses safety compliance of model outputs.",
+    quality: "Rates instruction quality using BLEURT metric.",
+    coverage_efficiency: "Compares coverage of solutions versus efficiency (steps taken)."
+  };
+  const infoText = chartExplanations[type] || "Chart explanation not available.";
 
   const downloadChart = async () => {
     const apiBase = "http://127.0.0.1:5173";
@@ -278,7 +296,52 @@ function ChartCard({ title, type, runs, modelFilters, datasetFilters }: {
     <>
       <div style={{ border: "1px solid var(--fg-border)", borderRadius: 8, padding: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-          <h4 style={{ margin: 0, fontSize: 15, fontWeight: 500 }}>{title}</h4>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <h4 style={{ margin: 0, fontSize: 15, fontWeight: 500 }}>{title}</h4>
+            <span
+              style={{ position: "relative", display: "inline-block" }}
+              onMouseEnter={() => setShowInfo(true)}
+              onMouseLeave={() => setShowInfo(false)}
+            >
+              <button
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  marginLeft: 2,
+                  cursor: "pointer",
+                  color: "var(--fg-steel)",
+                  fontSize: 16,
+                  lineHeight: 1
+                }}
+                aria-label="Chart info"
+                tabIndex={0}
+              >
+                <span style={{ fontWeight: 700, fontSize: 16 }}>i</span>
+              </button>
+              {showInfo && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "120%",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    background: "var(--bg-primary)",
+                    color: "var(--fg-white)",
+                    border: "1px solid var(--fg-border)",
+                    borderRadius: 6,
+                    padding: "8px 12px",
+                    fontSize: 13,
+                    whiteSpace: "pre-line",
+                    zIndex: 10,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.12)"
+                  }}
+                >
+                  {infoText}
+                </div>
+              )}
+            </span>
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={() => setIsExpanded(true)}
