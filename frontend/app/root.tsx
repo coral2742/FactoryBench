@@ -45,6 +45,7 @@ export default function App() {
               <a className={isActive('/leaderboard')} href="/leaderboard">Leaderboard</a>
               <a className={isActive('/analysis')} href="/analysis">Analysis</a>
               <a className={isActive('/run')} href="/run">Run</a>
+              <a className={isActive('/readme')} href="/readme">Readme</a>
             </nav>
           </div>
         </header>
