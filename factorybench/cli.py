@@ -80,5 +80,54 @@ def components_test(time_series_encoder, limit):
     click.echo(json.dumps({"run_id": run["run_id"], "aggregate": run["aggregate"]}, indent=2))
 
 
+# root cause analysis
+@cli.command("generate-data")
+@click.option("--count", default=100, type=int, help="Number of samples to generate")
+@click.option("--fault-ratio", default=0.2, type=float, help="Ratio of anomalies (0.0 to 1.0)")
+@click.option("--output", default="datasets/synthetic_rca.json", help="Output file path")
+def generate_rca_data(count, fault_ratio, output):
+    """Generate synthetic RCA data."""
+    from .generators.rca_simple import generate_batch
+    import json
+    from pathlib import Path
+    
+    click.echo(f"Generating {count} samples with fault ratio {fault_ratio}...")
+    samples = generate_batch(count=count, fault_ratio=fault_ratio)
+    
+    p = Path(output)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", encoding="utf-8") as f:
+        json.dump(samples, f, indent=2)
+        
+    click.echo(f"Saved to {output}")
+
+
+@cli.command("preview-data")
+@click.option("--file", required=True, help="Path to JSON data file")
+def preview_data(file):
+    """Preview a dataset file and show summary stats."""
+    import json
+    from pathlib import Path
+    
+    p = Path(file)
+    if not p.exists():
+        raise click.UsageError(f"File not found: {file}")
+        
+    with p.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+        
+    if not isinstance(data, list):
+        raise click.UsageError(f"Expected list of samples, got {type(data).__name__}")
+        
+    count = len(data)
+    anomalies = sum(1 for s in data if s.get("ground_truth", {}).get("root_cause_component") != "None")
+    
+    click.echo(f"Dataset Preview: {file}")
+    click.echo(f"Total Samples: {count}")
+    click.echo(f"Anomalies: {anomalies} ({(anomalies/count)*100:.1f}%)")
+    if count > 0:
+        click.echo("Sample IDs (first 3 IDs): " + ", ".join(s["id"] for s in data[:3]) + "...")
+
+
 if __name__ == "__main__":
     cli()
